@@ -154,7 +154,7 @@
    #define LOG_PTLS_NAMES 0
 #endif
 
-namespace aer::log
+namespace aer::log::internal
 {
 	using namespace std::chrono;
 
@@ -194,10 +194,10 @@ namespace aer::log
 	Verbosity g_stderr_verbosity  = Verbosity_0;
 	bool      g_colorlogtostderr  = true;
 	unsigned  g_flush_interval_ms = 0;
-	bool      g_preamble_header   = true;
+	bool      g_preamble_header   = false;
 	bool      g_preamble          = true;
 
-	Verbosity g_internal_verbosity = Verbosity_0;
+	Verbosity g_internal_verbosity = Verbosity_MAX;
 
 	// Preamble details
 	bool      g_preamble_date     = true;
@@ -672,7 +672,7 @@ namespace aer::log
 
 	void shutdown()
 	{
-		VLOG_F(g_internal_verbosity, "aer::log::shutdown()");
+		VLOG_F(g_internal_verbosity, "aer::log::internal::shutdown()");
 		remove_all_callbacks();
 		set_fatal_handler(nullptr);
 		set_verbosity_to_name_callback(nullptr);
@@ -786,7 +786,7 @@ namespace aer::log
 		free(file_path);
 		return true;
 	}
-	bool add_file(const char* path_in, FileMode mode, Verbosity verbosity)
+	bool add_file( const char* path_in, FileMode mode, Verbosity verbosity )
 	{
 		char path[PATH_MAX];
 		if (path_in[0] == '~') {
@@ -1383,12 +1383,12 @@ namespace aer::log
 		std::lock_guard<std::recursive_mutex> lock(s_mutex);
 
 		if (message.verbosity == Verbosity_FATAL) {
-			auto st = aer::log::stacktrace(stack_trace_skip + 2);
+			auto st = aer::log::internal::stacktrace(stack_trace_skip + 2);
 			if (!st.empty()) {
 				RAW_LOG_F(ERROR, "Stack trace:\n%s", st.c_str());
 			}
 
-			auto ec = aer::log::get_error_context();
+			auto ec = aer::log::internal::get_error_context();
 			if (!ec.empty()) {
 				RAW_LOG_F(ERROR, "%s", ec.c_str());
 			}
@@ -1634,7 +1634,7 @@ namespace aer::log
 	AbortLogger::~AbortLogger() noexcept(false)
 	{
 		auto message = _ss.str();
-		aer::log::log_and_abort(1, _expr, _file, _line, "%s", message.c_str());
+		aer::log::internal::log_and_abort(1, _expr, _file, _line, "%s", message.c_str());
 	}
 
 	#endif // LOG_WITH_STREAMS
@@ -1832,7 +1832,7 @@ namespace aer::log
 
 	// ----------------------------------------------------------------------------
 
-} // namespace aer::log
+} // namespace aer::log::internal
 
 // ----------------------------------------------------------------------------
 // .dP"Y8 88  dP""b8 88b 88    db    88     .dP"Y8
@@ -1842,17 +1842,17 @@ namespace aer::log
 // ----------------------------------------------------------------------------
 
 #ifdef _WIN32
-namespace aer::log {
+namespace aer::log::internal {
 	void install_signal_handlers(const SignalOptions& signal_options)
 	{
 		(void)signal_options;
 		// TODO: implement signal handlers on windows
 	}
-} // namespace aer::log
+} // namespace aer::log::internal
 
 #else // _WIN32
 
-namespace aer::log
+namespace aer::log::internal
 {
 	void write_to_stderr(const char* data, size_t size)
 	{
@@ -1966,7 +1966,7 @@ namespace aer::log
 			CHECK_F(sigaction(SIGTERM, &sig_action, NULL) != -1, "Failed to install handler for SIGTERM");
 		}
 	}
-} // namespace aer::log
+} // namespace aer::log::internal
 
 #endif // _WIN32
 
