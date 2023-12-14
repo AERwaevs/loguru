@@ -866,6 +866,11 @@ Any file that include some.hpp:
 // Message is optional
 #define ABORT_F(...) aer::log::internal::log_and_abort(0, "ABORT: ", __FILE__, __LINE__, __VA_ARGS__)
 
+#define ABORT_IF_F( cond, ...)                                                        \
+	((cond) == false)                          \
+		? (void)0                                                                                  \
+		: aer::log::internal::log_and_abort(0, "ABORT: ", __FILE__, __LINE__, __VA_ARGS__)
+
 // --------------------------------------------------------------------
 // CHECK_F macros:
 
